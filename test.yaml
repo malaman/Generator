@@ -1,0 +1,11 @@
+Article:
+    fields:
+        article_id: integer
+        article_title: varchar(50)
+        article_text: text
+        category_id: integer
+
+Category:
+    fields:
+        category_id: integer
+        category_title: varchar(50)
