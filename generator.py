@@ -29,11 +29,12 @@ def generate_ddl_statements(in_file, out_file):
                 if property_name == 'fields':
                     result = '\t'.join([result, '\n\t{}_id SERIAL NOT NULL, '.format(table_name)])
                     for (field, value) in fields.items():
-                        result = '\n\t'.join([result, '{}_{} {}, '.format(table_name, field, value)])
+                        result = '\n\t'.join([result, '{}_{} {}, '.format(table_name, field, value.upper())])
             result = '\n\t'.join([result, '{}_created timestamp NOT NULL DEFAULT now(),'.format(table_name), \
                                   '{}_updated timestamp NOT NULL DEFAULT now()\n);'.format(table_name),])
+        print(result)
         try:
-            f = open(out_file, 'e')
+            f = open(out_file, 'w')
             f.write(result)
             f.close()
         except:
