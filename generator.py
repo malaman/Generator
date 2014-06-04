@@ -5,15 +5,17 @@ def load_data(filename):
     try:
         with open(filename, 'r') as source:
             dump_data = load(source)
+            if dump_data is None:
+                print("File is empty. Nothing to parse")
+            source.close()
             return dump_data
     except FileNotFoundError:
         print("No such file or directory: {}".format(filename))
         return False
     except YAMLError:
         print("Could not parse file: {}".format(filename))
-        return False
-    finally:
         source.close()
+        return False
 
 
 def generate_ddl_statements(filename):
@@ -30,9 +32,6 @@ def generate_ddl_statements(filename):
             result = '\n\t'.join([result, '{}_created timestamp NOT NULL DEFAULT now(),'.format(table_name), \
                                   '{}_updated timestamp NOT NULL DEFAULT now()\n);'.format(table_name),])
         print(result)
-    else:
-        print("Nothing to parse")
-
 
 if __name__ == '__main__':
     generate_ddl_statements('test.yaml')
