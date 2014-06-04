@@ -1,11 +1,10 @@
 Article:
     fields:
-        article_id: integer
-        article_title: varchar(50)
-        article_text: text
-        category_id: integer
+        title: varchar(50)
+        description: text
+        text: text
+        tag: varchar(50)
 
 Category:
     fields:
-        category_id: integer
-        category_title: varchar(50)
+        title: varchar(50)
