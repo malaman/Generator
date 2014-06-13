@@ -2,12 +2,12 @@ from yaml import load, YAMLError
 
 
 class Generator(object):
-    __create_table_string = 'CREATE TABLE "{}"('
-    __serial_string       = '\n\t{}_id SERIAL NOT NULL, '
-    __created_string      = '{}_created timestamp NOT NULL DEFAULT now(),'
-    __updated_string      = '{}_updated timestamp NOT NULL DEFAULT now()'
-
-
+    __create_table_string = """CREATE TABLE "{table}"(
+    {table}_id serial NOT NULL,
+    {columns}
+    {table}_created timestamp NOT NULL DEFAULT now(),
+    {table}_updated timestamp NOT NULL DEFAULT now()
+);\n"""
 
     def __init__(self):
         self._alters   = set()
@@ -17,17 +17,11 @@ class Generator(object):
 
     def __build_tables(self):
         for (entity) in self._schema.keys():
-            table_statement= self.__create_table_string.format(entity.lower())
-            self._tables.add('{} {});\n'.format(table_statement, self.__build_columns(entity)))
+            self._tables.add(self.__create_table_string.format(table=entity.lower(), columns=self.__build_columns(entity)))
 
     def __build_columns(self, entity):
-        table_name = entity.lower()
-        field_statement = self.__serial_string.format(table_name)
         for (field, value) in self._schema[entity]['fields'].items():
-            field_statement = '\n\t'.join([field_statement, '{}_{} {}, '
-                .format(table_name, field, value.upper())])
-        field_statement = '\n\t'.join([field_statement, self.__created_string.
-            format(table_name),self.__updated_string.format(table_name),])
+            field_statement = '\n\t'.join(['{}_{} {}, '.format(entity.lower(), field, value)])
         return field_statement
 
     def __build_relations(self):
@@ -55,7 +49,6 @@ class Generator(object):
         self._triggers  = set()
         self._schema = ''
 
-
     def dump(self, filename):
         #write tables, then alters and triggers to file
         try:
@@ -63,7 +56,7 @@ class Generator(object):
             for table in self._tables:
                 f.write(str(table))
             f.close()
-        except:
+        except IOError:
             print('Unable to write to file')
 
     @staticmethod
@@ -84,5 +77,5 @@ class Generator(object):
 
 if __name__ == '__main__':
     generator = Generator()
-    generator.build_ddl('test.yaml')
-    generator.dump('statements.sql')
+    generator.build_ddl('schema.yaml')
+    generator.dump('schema.sql')
