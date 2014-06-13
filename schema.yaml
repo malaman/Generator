@@ -1,10 +1,20 @@
-Article:
-    fields:
-        title: varchar(50)
-        description: text
-        text: text
-        tag: varchar(50)
-
 Category:
     fields:
         title: varchar(50)
+    relations:
+        Article: many
+
+Tag:
+    fields:
+      name: varchar(30)
+    relations:
+      Article: many
+
+Article:
+    fields:
+        title: varchar(50)
+        text: text
+    relations:
+        Tag: many
+        Category: one
+
