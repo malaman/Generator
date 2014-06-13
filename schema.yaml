@@ -9,6 +9,14 @@ Tag:
       name: varchar(30)
     relations:
       Article: many
+      Order: many
+
+Order:
+    fields:
+      name: varchar(30)
+    relations:
+      Category: one
+      Tag: many
 
 Article:
     fields:

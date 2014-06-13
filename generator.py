@@ -6,8 +6,18 @@ class Generator(object):
     {table}_id serial NOT NULL,
     {columns}
     {table}_created timestamp NOT NULL DEFAULT now(),
-    {table}_updated timestamp NOT NULL DEFAULT now()
+    {table}_updated timestamp NOT NULL DEFAULT now(),
+    PRIMARY KEY ({table}_id)
 );\n"""
+
+    __create_join_table = """CREATE TABLE "{left}__{right}" (
+    "{left}_id" integer NOT NULL,
+    "{right}_id" integer NOT NULL,
+    PRIMARY KEY ({left}_id, {right}_id)
+);\n"""
+    __alter_string = """\nALTER TABLE "{child}" ADD "{parent}_id" integer NOT NULL,
+    ADD CONSTRAINT "fk_{child}_{parent}_id" FOREIGN KEY ("{parent}_id")
+    REFERENCES "{parent}" ("{parent}_id");\n"""
 
     __trigger_string = """\nCREATE OR REPLACE FUNCTION update_{table}_timestamp()
 RETURNS TRIGGER AS $$
@@ -16,18 +26,8 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
-CREATE TRIGGER "tr_{table}_updated" BEFORE UPDATE ON "table" FOR EACH ROW EXECUTE\n\
+CREATE TRIGGER "tr_{table}_updated" BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE\n\
 PROCEDURE update_{table}_timestamp();\n"""
-
-    __create_join_table = """CREATE TABLE "{left}__{right}" (
-    "{left}_id" integer NOT NULL,
-    "{right}_id" integer NOT NULL,
-    PRIMARY KEY ("{left}_id", "{right}_id")
-);\n"""
-    __alter_string = """\nALTER TABLE "{child}" ADD "{parent}_id" integer NOT NULL,
-    ADD CONSTRAINT "fk_{child}_{parent}_id" FOREIGN KEY ("{parent}_id")
-    REFERENCES "{parent}" ("{parent}_id");\n"""
-
 
     def __init__(self):
         self._alters   = set()
@@ -53,12 +53,15 @@ PROCEDURE update_{table}_timestamp();\n"""
             return {'left': string2, 'right': string1}
 
         for entity in self._schema.keys():
-            print(self._schema[entity]['relations'].items())
             for (table_name, relation_type) in self._schema[entity]['relations'].items():
                 if relation_type == 'one':
                     self.__build_many_to_one(entity.lower(), table_name.lower())
                 if relation_type == 'many':
-                    self.__build_many_to_many(**_order_tables(entity.lower(), table_name.lower()))
+                    try:
+                        if self._schema[table_name]['relations'][entity] == 'many':
+                            self.__build_many_to_many(**_order_tables(entity.lower(), table_name.lower()))
+                    except KeyError:
+                        pass
 
     def __build_many_to_one(self, child, parent):
         self._alters.add(self.__alter_string.format(child=child, parent=parent))
