@@ -3,6 +3,7 @@ Category:
         title: varchar(50)
     relations:
         Article: many
+        Order: many
 
 Tag:
     fields:
