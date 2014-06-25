@@ -25,7 +25,6 @@ class Generator(object):
     __create_trigger_str = """$$ language 'plpgsql';\nCREATE TRIGGER "tr_{table}_updated"
     BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE PROCEDURE update_{table}_timestamp();\n"""
 
-
     def __init__(self):
         self._alters   = set()
         self._tables   = set()
@@ -34,12 +33,13 @@ class Generator(object):
 
     def __build_tables(self):
         for entity in self._schema.keys():
-            self._tables.add(self.__create_table_string.format(table=entity.lower(),
-                                                               columns=self.__build_columns(entity)))
+            format_params = {'table': entity.lower(), 'columns': self.__build_columns(entity)}
+            self._tables.add(self.__create_table_string.format(**format_params))
 
     def __build_columns(self, entity):
         for (field, value) in self._schema[entity]['fields'].items():
-            field_statement = '\n\t'.join(['{}_{} {}, '.format(entity.lower(), field, value)])
+            format_params = (entity.lower(), field, value)
+            field_statement = '\n\t'.join(['{}_{} {}, '.format(*format_params)])
         return field_statement
 
     def __build_relations(self):
