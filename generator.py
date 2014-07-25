@@ -7,23 +7,23 @@ class Generator(object):
     {columns}
     {table}_created timestamp NOT NULL DEFAULT now(),
     {table}_updated timestamp NOT NULL DEFAULT now(),
-    PRIMARY KEY ({table}_id)\n);\n"""
+    PRIMARY KEY ({table}_id)\n);\n\n"""
 
     __create_join_table = """CREATE TABLE "{left}__{right}" (
     "{left}_id" integer NOT NULL,
     "{right}_id" integer NOT NULL,
-    PRIMARY KEY ({left}_id, {right}_id)\n);\n"""
+    PRIMARY KEY ({left}_id, {right}_id)\n);\n\n"""
 
-    __alter_string = """\nALTER TABLE "{child}" ADD "{parent}_id" integer NOT NULL,
+    __alter_string = """ALTER TABLE "{child}" ADD "{parent}_id" integer NOT NULL,
     ADD CONSTRAINT "fk_{child}_{parent}_id" FOREIGN KEY ("{parent}_id")
-    REFERENCES "{parent}" ("{parent}_id");"""
+    REFERENCES "{parent}" ("{parent}_id");\n\n"""
 
-    __trigger_proc_head = """\nCREATE OR REPLACE FUNCTION update_{table}_timestamp()\nRETURNS TRIGGER AS $$\n"""
+    __trigger_proc_head = """CREATE OR REPLACE FUNCTION update_{table}_timestamp()\nRETURNS TRIGGER AS $$\n"""
 
     __trigger_proc_body = "BEGIN\n\tNEW.{table}_updated = now();\n\tRETURN NEW;\nEND;\n"
 
     __create_trigger_str = """$$ language 'plpgsql';\nCREATE TRIGGER "tr_{table}_updated"
-    BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE PROCEDURE update_{table}_timestamp();"""
+    BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE PROCEDURE update_{table}_timestamp();\n\n"""
 
 
     def __init__(self):
@@ -38,7 +38,6 @@ class Generator(object):
             self._tables.add(self.__create_table_string.format(**format_params))
 
     def __build_columns(self, entity):
-        # field_statements = []
         for (field, value) in self._schema[entity]['fields'].items():
             format_params = (entity.lower(), field, value)
             yield '{}_{} {}, '.format(*format_params)
@@ -88,9 +87,9 @@ class Generator(object):
         #write tables, then alters and triggers to file
         try:
             f = open(filename, 'w')
-            f.write('\n'.join([table for table in self._tables]))
-            f.write('\n'.join([alter for alter in self._alters]))
-            f.write('\n'.join([trigger for trigger in self._triggers]))
+            f.write(''.join([table for table in self._tables]))
+            f.write(''.join([alter for alter in self._alters]))
+            f.write(''.join([trigger for trigger in self._triggers]))
             f.close()
         except IOError:
             print('Unable to write to file')
