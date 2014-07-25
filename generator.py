@@ -38,11 +38,10 @@ class Generator(object):
             self._tables.add(self.__create_table_string.format(**format_params))
 
     def __build_columns(self, entity):
-        field_statements = []
+        # field_statements = []
         for (field, value) in self._schema[entity]['fields'].items():
             format_params = (entity.lower(), field, value)
-            field_statements.append('{}_{} {}, '.format(*format_params))
-        return field_statements
+            yield '{}_{} {}, '.format(*format_params)
 
     def __build_relations(self):
         def _order_tables(table1, table2):
