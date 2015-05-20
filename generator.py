@@ -2,6 +2,9 @@ from yaml import load, YAMLError
 
 
 class Generator(object):
+    """
+    Generate DDL statements from YAML format
+    """
     __create_table_string = """CREATE TABLE "{table}"(
     {table}_id serial NOT NULL,
     {columns}
@@ -25,24 +28,34 @@ class Generator(object):
     __create_trigger_str = """$$ language 'plpgsql';\nCREATE TRIGGER "tr_{table}_updated"
     BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE PROCEDURE update_{table}_timestamp();\n\n"""
 
-
     def __init__(self):
-        self._alters   = set()
-        self._tables   = set()
+        self._alters = set()
+        self._tables = set()
         self._triggers = set()
         self._schema = ''
 
     def __build_tables(self):
+        """
+        Generate CREATE TABLE  statements
+        """
         for entity in self._schema.keys():
             format_params = {'table': entity.lower(), 'columns': '\n\t\t'.join(self.__build_columns(entity))}
             self._tables.add(self.__create_table_string.format(**format_params))
 
     def __build_columns(self, entity):
+        """
+        Generate list of columns for entity (table)
+
+        :entity, string - name of the table
+        """
         for (field, value) in self._schema[entity]['fields'].items():
             format_params = (entity.lower(), field, value)
             yield '{}_{} {}, '.format(*format_params)
 
     def __build_relations(self):
+        """
+        Generate relations between tables (many-to-one or many-to-many)
+        """
         def _order_tables(table1, table2):
             return tuple(sorted([table1.lower(), table2.lower()]))
 
@@ -69,7 +82,9 @@ class Generator(object):
             self._triggers.add(trigger_string.format(table=entity.lower()))
 
     def build_ddl(self, filename):
-        #parse yaml schema and fill tables, alters and triggers
+        """
+        parse yaml schema and fill tables, alters and triggers
+        """
         self._schema = self.__class__.load_data(filename)
         if self._schema:
             self.__build_tables()
@@ -77,14 +92,18 @@ class Generator(object):
             self.__build_relations()
 
     def clear(self):
-        #clear tables, alters and triggers
-        self._alters    = set()
-        self._tables    = set()
-        self._triggers  = set()
+        """
+        clear tables, alters and triggers
+        """
+        self._alters = set()
+        self._tables = set()
+        self._triggers = set()
         self._schema = ''
 
     def dump(self, filename):
-        #write tables, then alters and triggers to file
+        """
+        write tables, then alters and triggers to file
+        """
         try:
             f = open(filename, 'w')
             f.write(''.join([table for table in self._tables]))
@@ -96,6 +115,10 @@ class Generator(object):
 
     @staticmethod
     def load_data(filename):
+        """
+        Load data from file
+        :filename, string, name of file
+        """
         try:
             with open(filename, 'r') as source:
                 schema = load(source)
